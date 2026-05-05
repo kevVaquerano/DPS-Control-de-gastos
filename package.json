@@ -1,0 +1,31 @@
+{
+  "name": "dps-control-de-gastos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "App.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kevVaquerano/DPS-Control-de-gastos.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kevVaquerano/DPS-Control-de-gastos/issues"
+  },
+  "homepage": "https://github.com/kevVaquerano/DPS-Control-de-gastos#readme",
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/native": "^7.2.2",
+    "@react-navigation/stack": "^7.8.11",
+    "expo": "^55.0.20",
+    "firebase": "^12.12.1",
+    "react-native-gesture-handler": "~2.30.0",
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-screens": "~4.23.0"
+  }
+}
