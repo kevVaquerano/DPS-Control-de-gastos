@@ -10,8 +10,7 @@ import * as WebBrowser from 'expo-web-browser';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Integrante C: copia el Web Client ID desde Firebase Console >
-// Authentication > Sign-in method > Google > "ID de cliente web"
+// poner el client id de google que sale en firebase
 const WEB_CLIENT_ID = 'TU_WEB_CLIENT_ID.apps.googleusercontent.com';
 
 export default function LoginScreen({ navigation }) {
