@@ -8,6 +8,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,7 +20,7 @@ import {
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { auth, db } from '../../api/firebaseConfig';
 
-// Íconos visuales para identificar cada categoría de gasto.
+// Íconos visuales para cada categoría de gasto.
 const CATEGORY_ICONS = {
   Alimentación: '🍔',
   Transporte: '🚗',
@@ -32,7 +33,7 @@ const CATEGORY_ICONS = {
   Otros: '📦',
 };
 
-// Meses disponibles para filtrar el historial.
+// Meses utilizados para el filtro del historial.
 const MONTHS = [
   'Enero',
   'Febrero',
@@ -48,18 +49,18 @@ const MONTHS = [
   'Diciembre',
 ];
 
-// Convierte una fecha de Firestore o JavaScript en un objeto Date.
+// Convierte fechas de Firestore o fechas normales a Date.
 const getExpenseDate = (date) => date?.toDate?.() || new Date(date);
 
 // Convierte el monto a número para evitar errores si viene vacío.
 const getAmount = (amount) => Number(amount || 0);
 
 export default function HistoryScreen({ navigation }) {
-  // Detecta el ancho de pantalla para ajustar el diseño responsive.
+  // Detecta el tamaño de pantalla para aplicar diseño responsive.
   const { width } = useWindowDimensions();
   const isDesktop = width >= 1024;
 
-  // Año actual utilizado para filtrar los gastos.
+  // Año actual usado para filtrar gastos.
   const currentYear = new Date().getFullYear();
 
   // Estados principales de la pantalla.
@@ -68,45 +69,106 @@ export default function HistoryScreen({ navigation }) {
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
 
-  // Estilos calculados según el tamaño de pantalla.
-  // Esto reduce estilos repetidos tipo titleMobile/titleDesktop.
+  // Estilos responsive centralizados.
+  // Esto evita crear muchas clases separadas tipo titleMobile/titleDesktop.
   const layout = useMemo(
     () => ({
       contentWrap: isDesktop && styles.contentWrapDesktop,
+
       headerCard: {
-        minHeight: isDesktop ? 78 : 72,
-        paddingHorizontal: isDesktop ? 24 : 16,
+        maxWidth: isDesktop ? 700 : undefined,
+        minHeight: isDesktop ? 96 : 92,
+        borderRadius: isDesktop ? 22 : 12,
+        paddingHorizontal: isDesktop ? 26 : 18,
+        paddingVertical: isDesktop ? 16 : 14,
+        alignSelf: isDesktop ? 'center' : undefined,
       },
-      title: { fontSize: isDesktop ? 30 : 22 },
+
+      title: {
+        fontSize: isDesktop ? 30 : 18,
+      },
+
       backButton: {
-        minWidth: isDesktop ? 112 : 92,
-        height: isDesktop ? 42 : 38,
-        paddingHorizontal: isDesktop ? 16 : 12,
+        minWidth: isDesktop ? 128 : 96,
+        minHeight: isDesktop ? 52 : 46,
+        borderRadius: isDesktop ? 14 : 10,
+        paddingHorizontal: 14,
       },
-      backButtonText: { fontSize: isDesktop ? 16 : 14 },
-      totalCard: { paddingVertical: isDesktop ? 28 : 24 },
-      totalLabel: { fontSize: isDesktop ? 20 : 17 },
-      totalAmount: { fontSize: isDesktop ? 54 : 46 },
-      totalCount: { fontSize: isDesktop ? 17 : 15 },
+
+      backButtonText: {
+        fontSize: isDesktop ? 17 : 15,
+      },
+
+      totalCard: {
+        maxWidth: isDesktop ? 700 : undefined,
+        minHeight: isDesktop ? 170 : undefined,
+        borderRadius: isDesktop ? 22 : 18,
+        paddingVertical: isDesktop ? 24 : 22,
+        paddingHorizontal: isDesktop ? 24 : 22,
+        alignSelf: isDesktop ? 'center' : undefined,
+        justifyContent: isDesktop ? 'center' : undefined,
+      },
+
+      totalLabel: {
+        fontSize: isDesktop ? 18 : 15,
+      },
+
+      totalAmount: {
+        fontSize: isDesktop ? 58 : 42,
+        marginTop: isDesktop ? 10 : 8,
+      },
+
+      totalCount: {
+        fontSize: isDesktop ? 17 : 13,
+        marginTop: isDesktop ? 8 : 6,
+      },
+
       historyCard: {
-        minHeight: isDesktop ? 420 : 360,
-        padding: isDesktop ? 22 : 18,
+        maxWidth: isDesktop ? 700 : undefined,
+        height: isDesktop ? undefined : 320,
+        minHeight: isDesktop ? 220 : undefined,
+        borderRadius: isDesktop ? 22 : 18,
+        paddingBottom: isDesktop ? 6 : 16,
+        alignSelf: isDesktop ? 'center' : undefined,
       },
-      historyTitle: { fontSize: isDesktop ? 24 : 20 },
+
+      historyTitle: {
+        fontSize: isDesktop ? 19 : 18,
+      },
+
       item: {
-        minHeight: isDesktop ? 74 : 86,
-        paddingVertical: isDesktop ? 12 : 14,
+        minHeight: isDesktop ? 84 : undefined,
+        borderRadius: isDesktop ? 16 : 12,
+        paddingHorizontal: isDesktop ? 18 : 14,
+        paddingVertical: 14,
       },
-      itemIcon: { fontSize: isDesktop ? 30 : 28 },
-      itemName: { fontSize: isDesktop ? 20 : 18 },
-      itemMeta: { fontSize: isDesktop ? 14 : 13 },
-      itemAmount: { fontSize: isDesktop ? 22 : 19 },
-      emptyText: { fontSize: isDesktop ? 18 : 16 },
+
+      itemIcon: {
+        fontSize: isDesktop ? 30 : 24,
+        marginRight: isDesktop ? 16 : 12,
+      },
+
+      itemName: {
+        fontSize: isDesktop ? 18 : 15,
+      },
+
+      itemMeta: {
+        fontSize: isDesktop ? 14 : 12,
+        marginTop: isDesktop ? 4 : 2,
+      },
+
+      itemAmount: {
+        fontSize: isDesktop ? 18 : 16,
+      },
+
+      emptyText: {
+        fontSize: isDesktop ? 17 : 15,
+      },
     }),
     [isDesktop]
   );
 
-  // Texto que aparece dentro del selector.
+  // Texto que se muestra dentro del selector de mes.
   const selectedMonthLabel =
     selectedMonth !== null ? MONTHS[selectedMonth] : 'Selecciona un mes';
 
@@ -126,12 +188,12 @@ export default function HistoryScreen({ navigation }) {
       // Ruta: users/{uid}/expenses
       const expensesRef = collection(db, 'users', user.uid, 'expenses');
 
-      // Ordena los gastos desde el más reciente al más antiguo.
+      // Consulta ordenada del gasto más reciente al más antiguo.
       const expensesQuery = query(expensesRef, orderBy('date', 'desc'));
 
       const snapshot = await getDocs(expensesQuery);
 
-      // Convierte documentos de Firestore a objetos de JavaScript.
+      // Convierte los documentos de Firestore a objetos de JavaScript.
       const data = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -151,7 +213,6 @@ export default function HistoryScreen({ navigation }) {
   }, [fetchAllExpenses]);
 
   // Filtra los gastos por mes seleccionado y año actual.
-  // useMemo evita recalcular si no cambian los gastos o el mes.
   const filteredExpenses = useMemo(() => {
     if (selectedMonth === null) return [];
 
@@ -175,7 +236,7 @@ export default function HistoryScreen({ navigation }) {
     [filteredExpenses]
   );
 
-  // Formatea la fecha de cada gasto para mostrarla en forma corta.
+  // Formatea la fecha de cada gasto.
   const formatDate = (dateValue) => {
     const date = getExpenseDate(dateValue);
 
@@ -191,10 +252,12 @@ export default function HistoryScreen({ navigation }) {
     setIsMonthOpen(false);
   };
 
-  // Texto inferior de la tarjeta de total.
+  // Texto de conteo mostrado en la tarjeta del total.
   const totalCountText =
     selectedMonth !== null
-      ? `${filteredExpenses.length} gasto${filteredExpenses.length !== 1 ? 's' : ''}`
+      ? `${filteredExpenses.length} gasto${
+          filteredExpenses.length !== 1 ? 's' : ''
+        }`
       : 'Debes seleccionar un mes';
 
   // Renderiza una fila individual del historial.
@@ -249,8 +312,13 @@ export default function HistoryScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* Selector desplegable de meses */}
-          <View style={[styles.dropdownBlock, isDesktop && styles.dropdownBlockDesktop]}>
+          {/* Selector de mes */}
+          <View
+            style={[
+              styles.dropdownBlock,
+              isDesktop && styles.dropdownBlockDesktop,
+            ]}
+          >
             <View style={styles.dropdownRow}>
               <View style={[styles.dropdownSideBox, styles.dropdownLeftSide]}>
                 <Text style={styles.dropdownIcon}>🗓️</Text>
@@ -282,7 +350,7 @@ export default function HistoryScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* Opciones del selector de mes */}
+            {/* Menú desplegable de meses */}
             {isMonthOpen && (
               <View style={styles.dropdownMenu}>
                 <ScrollView
@@ -343,7 +411,11 @@ export default function HistoryScreen({ navigation }) {
             </Text>
 
             {loading ? (
-              <ActivityIndicator color="#38bdf8" size="large" style={styles.loader} />
+              <ActivityIndicator
+                color="#38bdf8"
+                size="large"
+                style={styles.loader}
+              />
             ) : selectedMonth === null ? (
               <View style={styles.historyEmptyBox}>
                 <Text style={styles.emptyIcon}>🫙</Text>
@@ -380,37 +452,43 @@ export default function HistoryScreen({ navigation }) {
 
 // ======================================================
 // Estilos de HistoryScreen.
-// Se redujeron estilos repetidos usando:
-// 1. estilos base,
-// 2. objeto layout para cambios responsive,
-// 3. dropdownSideBox para ambos lados del selector.
+// Se dejaron solo estilos base reutilizables.
+// Los cambios móvil/escritorio se manejan en el objeto layout.
 // ======================================================
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
     backgroundColor: '#0f172a',
   },
 
   pageScroll: {
     flex: 1,
     width: '100%',
+    minHeight: '100vh',
   },
 
   pageScrollContent: {
     width: '100%',
-    paddingHorizontal: 18,
-    paddingVertical: 24,
+    paddingBottom: 28,
   },
 
   contentWrap: {
     width: '100%',
-    maxWidth: 920,
     alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 56 : 24,
+    paddingBottom: 20,
   },
 
   contentWrapDesktop: {
-    maxWidth: 1000,
+    maxWidth: 860,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 22,
+    paddingTop: 26,
+    paddingBottom: 28,
   },
 
   headerCard: {
@@ -418,58 +496,58 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e293b',
     borderWidth: 1,
     borderColor: '#334155',
-    borderRadius: 20,
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 18,
   },
 
   title: {
     flex: 1,
     color: '#f8fafc',
-    fontWeight: '700',
+    fontWeight: 'bold',
     marginRight: 12,
   },
 
   backButton: {
     borderWidth: 1.5,
-    borderColor: '#38bdf8',
-    borderRadius: 10,
-    alignItems: 'center',
+    borderColor: '#4da3ff',
     justifyContent: 'center',
+    alignItems: 'center',
   },
 
   backButtonText: {
-    color: '#38bdf8',
+    color: '#4da3ff',
     fontWeight: '700',
   },
 
   dropdownBlock: {
     width: '100%',
     marginBottom: 16,
+    zIndex: 20,
   },
 
   dropdownBlockDesktop: {
-    maxWidth: 620,
+    maxWidth: 700,
     alignSelf: 'center',
   },
 
   dropdownRow: {
-    width: '100%',
-    height: 56,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
 
   dropdownSideBox: {
-    width: 56,
-    height: 56,
+    width: 62,
+    minHeight: 62,
     backgroundColor: '#1e293b',
     borderWidth: 1,
     borderColor: '#334155',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
 
   dropdownLeftSide: {
@@ -480,6 +558,7 @@ const styles = StyleSheet.create({
   dropdownRightSide: {
     borderTopRightRadius: 14,
     borderBottomRightRadius: 14,
+    borderColor: '#4da3ff',
   },
 
   dropdownIcon: {
@@ -488,13 +567,13 @@ const styles = StyleSheet.create({
 
   dropdownMain: {
     flex: 1,
-    height: 56,
+    minHeight: 62,
     backgroundColor: '#1e293b',
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: '#334155',
     justifyContent: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
   },
 
   dropdownText: {
@@ -504,33 +583,32 @@ const styles = StyleSheet.create({
   },
 
   dropdownPlaceholder: {
-    color: '#64748b',
+    color: '#94a3b8',
+    fontWeight: '500',
   },
 
   dropdownArrow: {
-    color: '#38bdf8',
-    fontSize: 14,
+    color: '#4da3ff',
+    fontSize: 28,
     fontWeight: '700',
   },
 
   dropdownMenu: {
-    width: '100%',
-    maxHeight: 260,
+    marginTop: 8,
     backgroundColor: '#1e293b',
     borderWidth: 1,
     borderColor: '#334155',
     borderRadius: 14,
-    marginTop: 8,
+    maxHeight: 240,
     overflow: 'hidden',
   },
 
   dropdownMenuScroll: {
-    maxHeight: 260,
+    maxHeight: 240,
   },
 
   dropdownOption: {
-    minHeight: 44,
-    justifyContent: 'center',
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#334155',
@@ -543,11 +621,11 @@ const styles = StyleSheet.create({
   dropdownOptionText: {
     color: '#cbd5e1',
     fontSize: 15,
-    fontWeight: '600',
   },
 
   dropdownOptionTextActive: {
     color: '#38bdf8',
+    fontWeight: '700',
   },
 
   totalCard: {
@@ -555,26 +633,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e293b',
     borderWidth: 1,
     borderColor: '#334155',
-    borderRadius: 22,
-    padding: 24,
+    borderRadius: 18,
+    padding: 22,
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
 
   totalLabel: {
-    color: '#64748b',
+    color: '#94a3b8',
     textAlign: 'center',
   },
 
   totalAmount: {
     color: '#38bdf8',
     fontWeight: 'bold',
-    marginTop: 8,
   },
 
   totalCount: {
-    color: '#475569',
-    marginTop: 8,
+    color: '#64748b',
+    textAlign: 'center',
   },
 
   historyCard: {
@@ -582,45 +659,52 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e293b',
     borderWidth: 1,
     borderColor: '#334155',
-    borderRadius: 22,
+    borderRadius: 18,
+    padding: 16,
   },
 
   historyTitle: {
     color: '#f8fafc',
     fontWeight: '700',
-    marginBottom: 16,
+    marginBottom: 12,
   },
 
   loader: {
     marginTop: 30,
   },
 
-  historyDesktopList: {
-    width: '100%',
-  },
-
   historyScroll: {
-    maxHeight: 460,
+    flex: 1,
   },
 
   historyScrollContent: {
+    paddingRight: 6,
     paddingBottom: 4,
   },
 
+  historyDesktopList: {
+    paddingBottom: 4,
+  },
+
+  historyEmptyBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   item: {
-    width: '100%',
     backgroundColor: '#0f172a',
     borderWidth: 1,
     borderColor: '#334155',
-    borderRadius: 16,
-    paddingHorizontal: 16,
+    borderRadius: 12,
+    padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
 
   itemIcon: {
-    marginRight: 14,
+    marginRight: 12,
   },
 
   itemInfo: {
@@ -629,12 +713,11 @@ const styles = StyleSheet.create({
 
   itemName: {
     color: '#f8fafc',
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   itemMeta: {
-    color: '#64748b',
-    marginTop: 4,
+    color: '#94a3b8',
   },
 
   itemAmount: {
@@ -642,22 +725,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  historyEmptyBox: {
-    flex: 1,
-    minHeight: 220,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 30,
-  },
-
   emptyIcon: {
-    fontSize: 46,
+    fontSize: 48,
     marginBottom: 12,
   },
 
   emptyText: {
     color: '#94a3b8',
-    fontWeight: '600',
     textAlign: 'center',
   },
 });
